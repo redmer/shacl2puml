@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //@ts-check
 import { QueryEngine } from "@comunica/query-sparql-file";
 import { Store, StreamParser } from "n3";
