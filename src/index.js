@@ -4,6 +4,7 @@ import { QueryEngine } from "@comunica/query-sparql-file";
 import { Store, StreamParser } from "n3";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { Constraint } from "./constraints.js";
@@ -62,9 +63,15 @@ await yargs(hideBin(process.argv))
       // We use a Set to cancel out duplicate lines from each property run
       const /** @type {Set<string>} */ lines = new Set();
 
-      for (let fn of ["res/constraints.rq", "res/unconstrained-classes.rq"]) {
-        fn = path.join(path.dirname(import.meta.url), "..", fn);
-        const query = fs.readFileSync(new URL(fn), { encoding: "utf-8" });
+      const resourcesDir = path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "..",
+        "res",
+      );
+
+      for (let fn of ["constraints.rq", "unconstrained-classes.rq"]) {
+        fn = path.join(resourcesDir, fn);
+        const query = fs.readFileSync(fn, { encoding: "utf-8" });
 
         let bindingsStream = await engine.queryBindings(query, {
           sources: [store],
@@ -95,14 +102,12 @@ await yargs(hideBin(process.argv))
         }
       }
 
-      const preambleFp = path.join(
-        path.dirname(import.meta.url),
-        "..",
-        "res/preamble.puml",
+      const preamble = fs.readFileSync(
+        path.join(resourcesDir, "preamble.puml"),
+        {
+          encoding: "utf-8",
+        },
       );
-      const preamble = fs.readFileSync(new URL(preambleFp), {
-        encoding: "utf-8",
-      });
 
       const sortedLines = [...lines].sort().join("\n");
 
