@@ -1,6 +1,6 @@
 {
   "name": "@rdmr-eu/shacl2puml",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Generate a PlantUML diagram from SHACL constraints.",
   "repository": "https://github.com/redmer/shacl2puml.git",
   "bugs": {
