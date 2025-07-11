@@ -1,0 +1,46 @@
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix sh: <http://www.w3.org/ns/shacl#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+
+select distinct ?classIri ?className ?superclassIri ?superclassName {
+  { ?classIri a owl:Class . } union { ?classIri a rdfs:Class . }
+
+  ### Generate label
+  optional {
+    select ?classIri (sample(?classNameXX) as ?classNameOntology) {
+      ?classIri rdfs:label|skos:prefLabel ?classNameXX
+      filter (lang(?classNameXX) in ('en', ''))
+    }
+    group by ?classIri
+  }
+  bind(
+    coalesce(str(?classNameOntology),replace(str(
+      ?classIri), "^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$", "$1"))
+    as ?className
+  )
+
+    ### Generate label
+    optional {
+      ?classIri rdfs:subClassOf ?superclassIri . 
+      {
+      # bug in ELM model - multiple en props, e.g. for mailbox
+      select ?superclassIri (sample(?superclassNameXX) as ?superclassNameOntology) {
+        ?superclassIri rdfs:label|skos:prefLabel ?superclassNameXX
+        filter (lang(?superclassNameXX) in ('en', ''))
+      }
+      group by ?superclassIri
+      }
+    }
+    optional {
+      ?superclassShape sh:name ?superclassNameShacl
+      filter (lang(?superclassNameShacl)='en')
+    }
+    bind(
+      coalesce(str(?superclassNameShacl), str(?superclassNameOntology),replace(str(
+        ?superclassIri),"^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$","$1"))
+      as ?superclassName
+    )
+}
+group by ?classIri ?className ?superclassIri ?superclassName
+order by ?superclassName ?className

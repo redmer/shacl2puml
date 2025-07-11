@@ -1,0 +1,102 @@
+prefix dct: <http://purl.org/dc/terms/>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix sh: <http://www.w3.org/ns/shacl#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
+
+select distinct ?classIri ?propertyIri ?rangeIri ?className ?propertyName ?rangeName ?minCount ?maxCount ?superclassIri ?superclassName {
+  ?classShape sh:targetClass ?classIri .
+
+  ### Generate label
+  optional {
+    select ?classIri (sample(?classNameXX) as ?classNameOntology) {
+      ?classIri rdfs:label|skos:prefLabel ?classNameXX
+      filter (lang(?classNameXX) in ('en', ''))
+    }
+    group by ?classIri
+  }
+  optional {
+    ?classShape dct:title ?classNameShacl
+    filter (lang(?classNameShacl) in ('en', ''))
+  }
+  bind(
+    coalesce(str(?classNameShacl),str(?classNameOntology),replace(str(
+      ?classIri), "^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$", "$1"))
+    as ?className
+  )
+
+  # superclassName and superclassIri
+  optional {
+    ?classIri rdfs:subClassOf ?superclassIri .
+
+    ### Generate label
+    optional {
+      # bug in ELM model - multiple en props, e.g. for mailbox
+      select ?superclassIri (sample(?superclassNameXX) as ?superclassNameOntology) {
+        ?superclassIri rdfs:label|skos:prefLabel ?superclassNameXX
+        filter (lang(?superclassNameXX) in ('en', ''))
+      }
+      group by ?superclassIri
+    }
+    optional {
+      ?superclassShape sh:name ?superclassNameShacl
+      filter (lang(?superclassNameShacl) in ('en', ''))
+    }
+    bind(
+      coalesce(str(?superclassNameShacl), str(?superclassNameOntology),replace(str(
+        ?superclassIri),"^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$","$1"))
+      as ?superclassName
+    )
+  }
+
+  optional {
+    ?classShape sh:property ?propertyShape .
+    ?propertyShape sh:path ?propertyIri .
+
+    ### Generate label
+    optional {
+      # bug in ELM model - multiple en props, e.g. for mailbox
+      select ?propertyIri (sample(?propertyNameXX) as ?propertyNameOntology) {
+        ?propertyIri rdfs:label|skos:prefLabel ?propertyNameXX
+        filter (lang(?propertyNameXX) in ('en', ''))
+      }
+      group by ?propertyIri
+    }
+    optional {
+      ?propertyShape sh:name ?propertyNameShacl
+      filter (lang(?propertyNameShacl) in ('en', ''))
+    }
+    bind(
+      coalesce(str(?propertyNameShacl), str(?propertyNameOntology),replace(str(
+        ?propertyIri),"^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$","$1"))
+      as ?propertyName
+    )
+
+    optional {
+      ?propertyShape sh:minCount ?minCountX .
+    }
+    bind(coalesce(?minCountX,0) as ?minCount)
+    optional {
+      ?propertyShape sh:maxCount ?maxCountX .
+    }
+    bind(coalesce(?maxCountX,"*") as ?maxCount)
+    optional {
+      ?propertyShape sh:class ?rangeClass .
+      optional {
+        ?rangeClass rdfs:label|skos:prefLabel ?rangeClassNameX
+        filter (lang(?rangeClassNameX) in ('en', ''))
+      }
+      bind(
+        coalesce(str(?rangeClassNameX),replace(str(?rangeClass),"^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$","$1"))
+        as ?rangeClassName
+      )
+    }
+    optional {
+      ?propertyShape sh:datatype ?rangeDatatypeX .
+      bind(replace(str(?rangeDatatypeX),"^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$","$1") as ?rangeDatatype)
+    }
+    bind(coalesce(?rangeClassName,?rangeDatatype,"literal") as ?rangeName)
+    bind(coalesce(?rangeClass,?rangeDatatypeX) as ?rangeIri)
+  }
+}
+group by ?classIri ?propertyIri ?rangeIri ?className ?propertyName ?rangeName ?minCount ?maxCount ?superclassIri ?superclassName
+order by ?className desc(?propertyName) ?minCount ?maxCount ?rangeName

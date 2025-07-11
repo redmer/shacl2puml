@@ -1,0 +1,30 @@
+{
+  "name": "@rdmr-eu/shacl2puml",
+  "version": "1.0.0",
+  "description": "Generate a PlantUML diagram from SHACL constraints.",
+  "repository": "https://github.com/redmer/shacl2puml.git",
+  "bugs": {
+    "url": "https://github.com/redmer/shacl2puml/issues"
+  },
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "shacl2puml": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "res",
+    "src"
+  ],
+  "author": "Redmer Kronemeijer <12477216+redmer@users.noreply.github.com> (https://rdmr.eu/)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@comunica/query-sparql-file": "^4.3.0",
+    "@rdfjs/namespace": "^2.0.1",
+    "n3": "^1.26.0",
+    "yargs": "^17.7.2"
+  }
+}
